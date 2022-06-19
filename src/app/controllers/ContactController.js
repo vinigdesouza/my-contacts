@@ -3,7 +3,8 @@ const ContactRepositories = require('../repositories/ContactRepositories');
 class ContactController {
   async index(request, response) {
     // listar todos os registros
-    const contacts = await ContactRepositories.findAll();
+    const { orderBy } = request.query;
+    const contacts = await ContactRepositories.findAll(orderBy);
     response.json(contacts);
   }
 
@@ -20,7 +21,9 @@ class ContactController {
 
   async store(request, response) {
     // criar novo registro
-    const { name, email, phone } = request.body;
+    const {
+      name, email, phone, category_id,
+    } = request.body;
 
     if (!name || !email || !phone) {
       return response.status(400).json({ error: 'Name, phone and email are required' });
@@ -32,13 +35,15 @@ class ContactController {
       return response.status(400).json({ error: 'This e-mail is already in use' });
     }
 
-    const contact = await ContactRepositories.createContact(name, email, phone);
+    const contact = await ContactRepositories.createContact(name, email, phone, category_id);
     return response.json(contact);
   }
 
   async update(request, response) {
     const { id } = request.params;
-    const { name, email, phone } = request.body;
+    const {
+      name, email, phone, category_id,
+    } = request.body;
 
     if (!name || !email || !phone) {
       return response.status(400).json({ error: 'Name, phone and email are required' });
@@ -56,7 +61,6 @@ class ContactController {
       return response.status(400).json({ error: 'This e-mail is already in use' });
     }
 
-    const { category_id } = contactExists;
     const contact = await ContactRepositories.update(id, {
       name, email, phone, category_id,
     });
@@ -66,11 +70,6 @@ class ContactController {
 
   async delete(request, response) {
     const { id } = request.params;
-    const contact = await ContactRepositories.findById(id);
-
-    if (!contact) {
-      return response.status(404).json({ error: 'User not found' });
-    }
 
     await ContactRepositories.deleteById(id);
 
